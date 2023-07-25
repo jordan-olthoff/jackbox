@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_DB: jackboxtest
+      POSTGRES_USER: jackboxtest
+      POSTGRES_PASSWORD: jackboxtest
+    restart: always
+    ports:
+      - '5432:5432'
+    volumes:
+      - jackbox:/var/lib/postgresql/data
+
+  migrate:
+    image: migrate/migrate
+    volumes:
+      - ../../api/db/migration:/migration
+    command: ["-path", "/migration", "-database",  "postgres://jackboxtest:jackboxtest@postgres:5432/jackboxtest?sslmode=disable", "up"]
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    restart: on-failure
+
+  jackbox:
+    build:
+      context: ../../
+      dockerfile: ./build/package/docker/Dockerfile
+    ports:
+      - '8080:8080'
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    restart: on-failure
+volumes:
+  jackbox:
+    driver: local

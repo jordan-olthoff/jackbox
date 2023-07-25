@@ -1,0 +1,254 @@
+openapi: 3.0.3
+servers:
+  - url: "http://localhost:8080/api/v1"
+    description: "Local server"
+info:
+  version: 1.0.0
+  title: User access schema
+tags:
+  - name: user
+    description: User login and authorization
+paths:
+  /auth/login:
+    post:
+      tags:
+        - user
+      summary: Login as user
+      description: Login as user
+      operationId: getToken
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        default:
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        description: Login as a user
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsernamePassword'
+  /auth/token:
+    post:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - user
+      summary: Retrieve new token for user
+      description: Retrieve new token for user
+      operationId: refreshToken
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        default:
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        description: Retrieve new token for user
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Username'
+  /user:
+    post:
+      tags:
+        - user
+      summary: Add a new user
+      description: Add a new user
+      operationId: addUser
+      responses:
+        '201':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        default:
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        description: Create a new user
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+  '/user/{username}':
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - user
+      summary: Find user by username
+      description: Returns a single user
+      operationId: getUserByUsername
+      parameters:
+        - name: username
+          in: path
+          description: username of user to return
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+        default:
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  '/users':
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - user
+      summary: Get all users
+      description: Returns a list of users
+      operationId: getUsers
+      parameters:
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: The number of items to skip before starting to collect the result set
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: The numbers of items to return
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserList'
+        '404':
+          description: User not found
+        default:
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    LoginResponse:
+      required:
+        - token
+        - user
+      type: object
+      properties:
+        token:
+          $ref: '#/components/schemas/Token'
+        user:
+          $ref: '#/components/schemas/User'
+    Token:
+      required:
+        - token
+      type: object
+      properties:
+        token:
+          type: string
+          example: xxxxx.yyyyy.zzzzz
+    Username:
+      required:
+        - username
+      type: object
+      properties:
+        username:
+          type: string
+          example: Johniathon
+    UsernamePassword:
+      required:
+        - username
+        - password
+      type: object
+      properties:
+        username:
+          type: string
+          example: JerrBear
+        password:
+          type: string
+          example: mybirthday
+    User:
+      required:
+        - username
+        - firstname
+        - lastname
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          example: Johniathon
+        firstname:
+          type: string
+          example: John
+        lastname:
+          type: string
+          example: Doe
+        email:
+          type: string
+          format: email
+          example: email@email.com
+        password:
+          type: string
+          format: password
+          example: supersecurepasswordnoonewillguess
+      type: object
+    UserList:
+      type: array
+      items:
+        $ref: '#/components/schemas/User'
+    Error:
+      description: Represents error object
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int64
+        message:
+          type: string
+      required:
+        - code
+        - message
+  requestBodies:
+    User:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
+      description: User object to be added or retrieved
